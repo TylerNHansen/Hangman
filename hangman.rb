@@ -1,3 +1,6 @@
+require 'set'
+require 'time'
+
 class Game
   attr_accessor :partial_word, :guesses
   attr_reader :guesser, :checker
@@ -106,11 +109,11 @@ class HumanPlayer < Player
 end
 
 class ComputerPlayer < Player
-  attr_accessor :dictionary #array of words
+  attr_accessor :dictionary #set of words
   attr_writer :secret_word
 
   def initialize(dict_file_name = './dictionary.txt')
-    @dictionary = File.new(dict_file_name).readlines.map(&:chomp)
+    @dictionary = Set.new(File.new(dict_file_name).readlines.map(&:chomp))
   end
 
   def pick_secret_word(length = nil)
@@ -139,6 +142,7 @@ class ComputerPlayer < Player
     wordcount.max_by {|key, value| value}[0]
   end
 
+
   def dict_filter(partial_word, guesses)
     open_letters = LETTERS.delete(guesses)
     self.dictionary.keep_if do |word|
@@ -166,8 +170,8 @@ class ComputerPlayer < Player
     char == target
   end
 
-  def check_guess(guesses)
-    @secret_word.gsub(/[^#{guesses}_]/, '_')
+  def check_guess(guesses, word = @secret_word)
+    word.gsub(/[^#{guesses}_]/, '_')
   end
 
   def handle_guess_response
@@ -175,6 +179,54 @@ class ComputerPlayer < Player
   end
 
 end
+
+class SmartComputerPlayer < ComputerPlayer
+
+  def guess(partial_word, guesses)
+    cost_hash = self.make_cost_hash(partial_word, guesses)
+
+  end
+
+  def make_cost_hash(partial_word, guesses)
+    start = Time.now
+    cost_hash = Hash.new {Set.new}
+    trim_dict(partial_word.size)
+
+    puts "building a hash, this may take a minute"
+    self.dictionary.each do |word|
+      LETTERS.delete(guesses).chars.each do |chr|
+        # p self.check_guess(guesses, word)
+        cost_hash[chr + self.check_guess(guesses+chr, word)] += Set.new([word])
+      end
+    end
+
+    puts "hash done, took #{Time.now - start}"
+
+    cost_hash
+
+  end
+
+  def trim_dict(len)
+    self.dictionary.delete_if { |word| word.size != len }
+  end
+end
+
+    # dict_filter(partial_word, guesses)
+    # wordcount = Hash.new{0}
+    #
+    # p "THERE ARE BUT #{self.dictionary.size} WORDS REMAINING"
+    #
+    # #for each letter in the alphabet that we haven't guessed,
+    # LETTERS.delete(guesses).chars.each do |char|
+    #   #count how many words include it, and store that in the wordcount hash
+    #   wordcount[char] = self.dictionary.count do |word|
+    #     word.include?(char)
+    #   end
+    # end
+    # wordcount.max_by {|key, value| value}[0]
+#   end
+#
+# end
 
 class String
   def all_in_az?
