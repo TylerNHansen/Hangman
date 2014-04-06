@@ -88,6 +88,8 @@ class ComputerPlayer < Player
   attr_accessor :dictionary #array of words
   attr_writer :secret_word
 
+  LETTERS = ("a".."z").to_a.join("")
+
   def initialize(dict_file_name = './dictionary.txt')
     @dictionary = File.new(dict_file_name).readlines.map(&:chomp)
   end
@@ -102,8 +104,9 @@ class ComputerPlayer < Player
     nil
   end
 
-  def guess
-    raise NotImplementedError.new
+  def guess(partial_word, guesses)
+    #for now, pick any letter we haven't guessed
+    LETTERS.gsub(/[#{guesses}_]/, "").split("").sample
   end
 
   def check_guess(guesses)
@@ -139,8 +142,5 @@ def write_filtered_dict(in_name = nil, out_name = nil)
   end
   nil
 end
-
-Game.new.play
-
 
 
