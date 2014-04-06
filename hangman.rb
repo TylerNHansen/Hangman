@@ -190,13 +190,15 @@ class SmartComputerPlayer < ComputerPlayer
   def make_cost_hash(partial_word, guesses)
     start = Time.now
     cost_hash = Hash.new {Set.new}
-    trim_dict(partial_word.size)
+    #trim_dict(partial_word.size)
 
     puts "building a hash, this may take a minute"
     self.dictionary.each do |word|
+      puts "hashing #{word} and about 1000 others" if rand(1000) == 5
+
       LETTERS.delete(guesses).chars.each do |chr|
         # p self.check_guess(guesses, word)
-        cost_hash[chr + self.check_guess(guesses+chr, word)] += Set.new([word])
+        cost_hash["#{(guesses + chr).chars.sort.join("")}&" + self.check_guess(guesses+chr, word)] += Set.new([word])
       end
     end
 
