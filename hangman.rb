@@ -9,7 +9,7 @@ class Game
   end
 
   def play
-    self.checker.pick_secret_word
+    self.partial_word = "_" * self.checker.pick_secret_word
 
 
     make_guess
@@ -120,13 +120,50 @@ class ComputerPlayer < Player
     self.secret_word = self.dictionary
     .select{ |word| word.size == length }.sample
 
-    nil
+    self.secret_word.size
   end
 
   def guess(partial_word, guesses)
-    #for now, pick any letter we haven't guessed
-    guess = LETTERS.gsub(/[#{guesses}_]/, "").split("").sample
-    guess
+    dict_filter(partial_word, guesses)
+    wordcount = Hash.new{0}
+
+    p "THERE ARE BUT #{self.dictionary.size} WORDS REMAINING"
+
+    #for each letter in the alphabet that we haven't guessed,
+    LETTERS.delete(guesses).chars.each do |char|
+      #count how many words include it, and store that in the wordcount hash
+      wordcount[char] = self.dictionary.count do |word|
+        word.include?(char)
+      end
+    end
+    wordcount.max_by {|key, value| value}[0]
+  end
+
+  def dict_filter(partial_word, guesses)
+    open_letters = LETTERS.delete(guesses)
+    self.dictionary.keep_if do |word|
+      possible = true
+      word.length.times do |ind|
+        unless char_valid?(word[ind], guesses, partial_word[ind])
+          possible = false
+        end
+      end
+      possible = false unless word.size == partial_word.size
+      possible
+    end
+    self.dictionary.size
+
+  end
+
+  #if target is _, returns false if we've guessed the word's char already
+  #if target is a-z, returns false if our word has a different char
+  def char_valid?(char, guesses, target)
+
+    if target == '_'
+      return !guesses.include?(char)
+    end
+
+    char == target
   end
 
   def check_guess(guesses)
