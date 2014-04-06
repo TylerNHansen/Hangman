@@ -11,10 +11,35 @@ class Game
   def play
     self.checker.pick_secret_word
 
+
+    make_guess
     loop do
-      self.partial_word = self.checker.check_guess(self.guesses)
-      self.guesses += self.guesser.guess(self.partial_word, self.guesses)
+      check_guess
+      make_guess
+      break if game_over?
     end
+
+    puts self.partial_word
+    puts guesser_won? ? "GUESSER WINS" : "GUESSER LOSES"
+
+  end
+
+  def guesser_won?
+    !self.partial_word.include?('_')
+  end
+
+  def game_over?
+    self.guesses.length > 10 || guesser_won?
+  end
+
+  def make_guess
+    self.partial_word = self.checker.check_guess(self.guesses)
+    nil
+  end
+
+  def check_guess
+    self.guesses += self.guesser.guess(self.partial_word, self.guesses)
+    nil
   end
 
 end
