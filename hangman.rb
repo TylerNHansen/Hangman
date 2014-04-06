@@ -3,8 +3,8 @@ class Game
   attr_reader :guesser, :checker
 
   def initialize
-    @guesser = HumanPlayer.new
-    @checker = ComputerPlayer.new
+    @guesser = ComputerPlayer.new
+    @checker = HumanPlayer.new
     @guesses = ""
   end
 
@@ -32,12 +32,12 @@ class Game
     self.guesses.length > 10 || guesser_won?
   end
 
-  def make_guess
+  def check_guess
     self.partial_word = self.checker.check_guess(self.guesses)
     nil
   end
 
-  def check_guess
+  def make_guess
     self.guesses += self.guesser.guess(self.partial_word, self.guesses)
     nil
   end
@@ -46,6 +46,8 @@ end
 
 
 class Player
+
+  LETTERS = ("a".."z").to_a.join("")
 
   def pick_secret_word
     raise NotImplementedError.new
@@ -70,6 +72,12 @@ class Player
 end
 
 class HumanPlayer < Player
+  attr_accessor :secret_length
+
+  def pick_secret_word
+    puts "how many letters in your word?"
+    self.secret_length = gets.chomp.to_i
+  end
 
 
   def guess(partial_word, guesses)
@@ -82,13 +90,24 @@ class HumanPlayer < Player
     return guess
   end
 
+  def check_guess(guesses)
+    puts "the computer guessed #{guesses.chars.sort.to_a.join("")}"
+    puts "please type the appropriate hangman string"
+    partial_word = gets.chomp
+    check_guess(guesses) unless valid_answer?(partial_word, guesses)
+    partial_word
+  end
+
+  def valid_answer?(partial_word, guesses)
+    return false if partial_word.include?(LETTERS.delete(guesses))
+    return false unless partial_word.size == self.secret_length
+    true
+  end
 end
 
 class ComputerPlayer < Player
   attr_accessor :dictionary #array of words
   attr_writer :secret_word
-
-  LETTERS = ("a".."z").to_a.join("")
 
   def initialize(dict_file_name = './dictionary.txt')
     @dictionary = File.new(dict_file_name).readlines.map(&:chomp)
@@ -106,7 +125,8 @@ class ComputerPlayer < Player
 
   def guess(partial_word, guesses)
     #for now, pick any letter we haven't guessed
-    LETTERS.gsub(/[#{guesses}_]/, "").split("").sample
+    guess = LETTERS.gsub(/[#{guesses}_]/, "").split("").sample
+    guess
   end
 
   def check_guess(guesses)
