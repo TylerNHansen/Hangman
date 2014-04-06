@@ -1,8 +1,20 @@
 class Game
   attr_accessor :partial_word, :guesses
-  attr_reader :player1, :player2
+  attr_reader :guesser, :checker
 
   def initialize
+    @guesser = HumanPlayer.new
+    @checker = ComputerPlayer.new
+    @guesses = ""
+  end
+
+  def play
+    self.checker.pick_secret_word
+
+    loop do
+      self.partial_word = self.checker.check_guess(self.guesses)
+      self.guesses += self.guesser.guess(self.partial_word, self.guesses)
+    end
   end
 
 end
@@ -36,10 +48,13 @@ class HumanPlayer < Player
 
 
   def guess(partial_word, guesses)
-    puts "you have guessed #{guesses.uniq}"
+    puts "you have guessed #{guesses.chars.sort.to_a.join("")}"
     puts "you see #{partial_word}"
     puts "what letter would you like to guess?"
-    return gets.chomp
+
+    guess = gets.chomp
+    raise 'quitting at user request' if guess.downcase == 'quit'
+    return guess
   end
 
 end
@@ -67,7 +82,7 @@ class ComputerPlayer < Player
   end
 
   def check_guess(guesses)
-    @secret_word.gsub(/[^#{guesses}]/, '_')
+    @secret_word.gsub(/[^#{guesses}_]/, '_')
   end
 
   def handle_guess_response
@@ -99,6 +114,8 @@ def write_filtered_dict(in_name = nil, out_name = nil)
   end
   nil
 end
+
+Game.new.play
 
 
 
